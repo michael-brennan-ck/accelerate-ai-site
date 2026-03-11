@@ -23,10 +23,17 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
+        with:
+          install_components: bq
 
       - name: Query BigQuery and build data.json
+        env:
+          TIMESTAMP: ${{ github.event.repository.updated_at }}
         run: |
           set -euo pipefail
+
+          echo "bq version:"
+          bq version || echo "bq not found"
 
           DATASET="ck-growthtech-prod.accelerate_ai_tracker.skill_usage"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

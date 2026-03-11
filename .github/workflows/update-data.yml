@@ -43,7 +43,7 @@ jobs:
           #   user, team, current_level, days_active, tools (comma-sep),
           #   latest_contribution, leveled_up_recently (boolean)
           echo "Running people query..."
-          bq query --use_legacy_sql=false --format=json --max_rows=10000 --project_id=ck-growthtech-prod \
+          bq query --use_legacy_sql=false --format=json --max_rows=10000 --project_id=ck-growthtech-prod 2>/tmp/bq_err.txt \
           "$(cat <<'SQL'
           WITH base AS (
             SELECT
@@ -112,7 +112,13 @@ jobs:
           JOIN prev_level pl  ON pl.user = ut.user
           ORDER BY lc.current_level DESC, lc.days_active DESC
           SQL
-          )" > /tmp/people.json
+          )" > /tmp/people.json || true
+          echo "=== BQ ERROR OUTPUT ==="
+          cat /tmp/bq_err.txt 2>/dev/null || true
+          echo "=== END BQ ERROR ==="
+          echo "=== people.json content ==="
+          cat /tmp/people.json 2>/dev/null | head -5 || true
+          echo "=== end ==="
 
           # ── 2. Per-team summary ───────────────────────────────────────────
           bq query --use_legacy_sql=false --format=json --max_rows=100 --project_id=ck-growthtech-prod \

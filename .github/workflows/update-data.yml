@@ -30,10 +30,11 @@ jobs:
         env:
           TIMESTAMP: ${{ github.event.repository.updated_at }}
         run: |
-          set -euo pipefail
+          set -xuo pipefail
 
           echo "bq version:"
           bq version || echo "bq not found"
+          echo "Project: $(gcloud config get project)"
 
           DATASET="ck-growthtech-prod.accelerate_ai_tracker.skill_usage"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -41,7 +42,8 @@ jobs:
           # ── 1. Per-person rollup ──────────────────────────────────────────
           #   user, team, current_level, days_active, tools (comma-sep),
           #   latest_contribution, leveled_up_recently (boolean)
-          bq query --use_legacy_sql=false --format=json --max_rows=10000 \
+          echo "Running people query..."
+          bq query --use_legacy_sql=false --format=json --max_rows=10000 --project_id=ck-growthtech-prod \
           "$(cat <<'SQL'
           WITH base AS (
             SELECT
@@ -113,7 +115,7 @@ jobs:
           )" > /tmp/people.json
 
           # ── 2. Per-team summary ───────────────────────────────────────────
-          bq query --use_legacy_sql=false --format=json --max_rows=100 \
+          bq query --use_legacy_sql=false --format=json --max_rows=100 --project_id=ck-growthtech-prod \
           "$(cat <<'SQL'
           WITH base AS (
             SELECT user, team, DATE(timestamp) AS day
@@ -151,7 +153,7 @@ jobs:
           )" > /tmp/teams.json
 
           # ── 3. Recent level-ups (last 7 days) ────────────────────────────
-          bq query --use_legacy_sql=false --format=json --max_rows=50 \
+          bq query --use_legacy_sql=false --format=json --max_rows=50 --project_id=ck-growthtech-prod \
           "$(cat <<'SQL'
           WITH base AS (
             SELECT user, team, DATE(timestamp) AS day

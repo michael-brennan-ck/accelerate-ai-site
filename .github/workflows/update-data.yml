@@ -23,18 +23,10 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          install_components: bq
 
       - name: Query BigQuery and build data.json
-        env:
-          TIMESTAMP: ${{ github.event.repository.updated_at }}
         run: |
-          set -xuo pipefail
-
-          echo "bq version:"
-          bq version || echo "bq not found"
-          echo "Project: $(gcloud config get project)"
+          set -euo pipefail
 
           DATASET="ck-growthtech-prod.accelerate_ai_tracker.skill_usage"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -42,8 +34,7 @@ jobs:
           # ── 1. Per-person rollup ──────────────────────────────────────────
           #   user, team, current_level, days_active, tools (comma-sep),
           #   latest_contribution, leveled_up_recently (boolean)
-          echo "Running people query..."
-          bq query --use_legacy_sql=false --format=json --max_rows=10000 --project_id=ck-growthtech-prod 2>/tmp/bq_err.txt \
+          bq query --use_legacy_sql=false --format=json --max_rows=10000 --project_id=ck-growthtech-prod \
           "$(cat <<'SQL'
           WITH base AS (
             SELECT
@@ -112,13 +103,7 @@ jobs:
           JOIN prev_level pl  ON pl.user = ut.user
           ORDER BY lc.current_level DESC, lc.days_active DESC
           SQL
-          )" > /tmp/people.json || true
-          echo "=== BQ ERROR OUTPUT ==="
-          cat /tmp/bq_err.txt 2>/dev/null || true
-          echo "=== END BQ ERROR ==="
-          echo "=== people.json content ==="
-          cat /tmp/people.json 2>/dev/null | head -5 || true
-          echo "=== end ==="
+          )" > /tmp/people.json
 
           # ── 2. Per-team summary ───────────────────────────────────────────
           bq query --use_legacy_sql=false --format=json --max_rows=100 --project_id=ck-growthtech-prod \

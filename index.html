@@ -1,43 +1,624 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accelerate AI</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .container {
-            text-align: center;
-            padding: 2rem;
-        }
-        h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 1rem;
-        }
-        p {
-            font-size: 1.25rem;
-            color: #94a3b8;
-            max-width: 500px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Activation Leaderboard – Credit Karma</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>body { margin: 0; }</style>
 </head>
 <body>
-    <div class="container">
-        <h1>Accelerate AI</h1>
-        <p>Progress dashboard coming soon. Replace this page with your custom HTML.</p>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useEffect, useMemo } = React;
+
+// CK Brand Colors
+const CK = {
+  karmaGreen:  "#008600",
+  springGreen: "#52C800",
+  darkForest:  "#132F00",
+  deepGreen:   "#065C12",
+  pacific:     "#002356",
+  royal:       "#7039A3",
+  sky:         "#009CC1",
+  taupe:       "#EAE0C8",
+  cream:       "#F6F2DB",
+  beach:       "#E0BF8C",
+  muir:        "#005B13",
+  sunset:      "#FF5E00",
+  butter:      "#FFC300",
+  violet:      "#905BD6",
+  gold:        "#B68C50",
+  sageGreen:   "#6AA84F",
+  intuitBlue:  "#001D3C",
+  darkNavy:    "#073763",
+  white:       "#FFFFFF",
+  nearWhite:   "#F8F8F8",
+  lightGray:   "#E9EEF0",
+  darkGray:    "#373737",
+  nearBlack:   "#303030",
+  midGray:     "#999999",
+  medGray:     "#D9D9D9",
+};
+
+// Dark theme derived from CK palette
+const BG_BASE     = "#071204";
+const BG_CARD     = "#0c1e06";
+const BG_ELEVATED = "#0f2808";
+const BORDER      = "#1a3a0e";
+const BORDER_LIGHT= "#245214";
+const TEXT_PRIMARY = "#E8F0E4";
+const TEXT_MUTED   = "#5a7a4a";
+const TEXT_DIM     = "#3a5a2a";
+
+const LEVELS = [
+  { id: 0, name: "Activation", emoji: "⚡", color: CK.midGray,     bg: "rgba(153,153,153,0.12)", border: "rgba(153,153,153,0.35)", desc: "Tool access + basic understanding" },
+  { id: 1, name: "User",       emoji: "🎯", color: CK.sky,         bg: "rgba(0,156,193,0.12)",   border: "rgba(0,156,193,0.35)",   desc: "Uses AI nearly everyday as a co-pilot" },
+  { id: 2, name: "Builder",    emoji: "🔧", color: CK.karmaGreen,  bg: "rgba(0,134,0,0.12)",     border: "rgba(0,134,0,0.35)",     desc: "Building repeatable tools & prompts" },
+  { id: 3, name: "Automater",  emoji: "🤖", color: CK.butter,      bg: "rgba(255,195,0,0.12)",   border: "rgba(255,195,0,0.35)",   tag: "BOSS MODE",            desc: "Agent actively automating their work" },
+  { id: "N", name: "Catalyst", emoji: "🔮", color: CK.royal,       bg: "rgba(112,57,163,0.12)",  border: "rgba(112,57,163,0.35)",  tag: "AHEAD OF THE CURVE",   desc: "Early adopter activating others" },
+];
+
+const TEAMS = [
+  { id: "growth", name: "Growth",  lead: "Laura",  color: CK.karmaGreen,  accent: "rgba(0,134,0,0.12)"    },
+  { id: "bie",    name: "BIE",     lead: "Sarah",  color: CK.royal,       accent: "rgba(112,57,163,0.12)" },
+  { id: "gtops",  name: "GTOps",   lead: "Peter",  color: CK.sky,         accent: "rgba(0,156,193,0.12)"  },
+  { id: "coms",   name: "Coms",    lead: "Emily",  color: CK.springGreen, accent: "rgba(82,200,0,0.12)"   },
+  { id: "media",  name: "Media",   lead: "Larisa", color: CK.sunset,      accent: "rgba(255,94,0,0.12)"   },
+];
+
+function mkInitials(name) {
+  return name.split(" ").map(w => w[0]).join("").toUpperCase();
+}
+
+const FIRST = ["Alex","Blake","Cameron","Dana","Drew","Elliott","Finley","Harper","Jordan","Jamie","Kai","Lee","Morgan","Noah","Parker","Quinn","Riley","Sage","Sam","Skyler","Taylor","Avery","Casey","Devon","Emery","Frankie","Gray","Haven","Indigo","Jesse","Kendall","Logan","Marley","Nico","Oakley","Peyton","Reese","River","Rowan","Scout","Sloane","Sutton","Tatum","Teagan","Tobin","Val","Wren","Yael","Zara","Zion"];
+const LAST  = ["Adams","Baker","Carter","Davis","Evans","Foster","Garcia","Harris","Hill","Jackson","Johnson","Jones","Kim","Lee","Lewis","Martin","Martinez","Miller","Moore","Nelson","Parker","Patel","Reed","Rivera","Roberts","Robinson","Rodriguez","Scott","Smith","Taylor","Thomas","Thompson","Turner","Walker","White","Williams","Wilson","Wood","Wright","Young","Zhang","Chen","Nguyen","Brown","Clark","Allen","King","Hall","Green","Lopez"];
+
+function pick(arr, seed) { return arr[seed % arr.length]; }
+
+const TOOLS_POOL = ["Claude","GPT","Notion AI","Midjourney","Zapier","Make","Perplexity","Gemini"];
+const CONTRIBUTIONS = [
+  "Daily AI user","Ad copy drafts","Email drafts","Social content","Meeting summaries",
+  "Research assistant","Campaign briefs","Built prompt templates","Copy review workflow",
+  "Automated reporting","SEO brief automation","Agent handles scheduling",
+  "Competitive intel workflow","Content calendar agent","Built 3 reusable prompts",
+  "Just activated!","In onboarding","Getting started","Tool access granted",
+];
+
+const TEAM_SIZES = { growth: 52, bie: 38, gtops: 44, coms: 36, media: 30 };
+
+const PEOPLE = (() => {
+  const people = [];
+  let id = 1;
+  TEAMS.forEach(team => {
+    const size = TEAM_SIZES[team.id];
+    for (let i = 0; i < size; i++) {
+      const seed = id * 7 + i * 13;
+      const firstName = pick(FIRST, seed + 3);
+      const lastName  = pick(LAST,  seed + 11);
+      const name = `${firstName} ${lastName[0]}.`;
+      const r = (seed * 17 + i * 31) % 100;
+      const level = r < 5 ? "N" : r < 15 ? 3 : r < 35 ? 2 : r < 85 ? 1 : 0;
+      const daysActive = level === 0 ? (seed % 5) + 1 : level === 1 ? (seed % 14) + 7 : level === 2 ? (seed % 12) + 14 : (seed % 8) + 20;
+      const toolCount = level === 0 ? 0 : level === 1 ? 1 : 2;
+      const tools = TOOLS_POOL.slice((seed % 6), (seed % 6) + toolCount);
+      const contribution = CONTRIBUTIONS[seed % CONTRIBUTIONS.length];
+      const delta = (seed % 5 === 0) ? 1 : 0;
+      people.push({ id: id++, name, initials: mkInitials(name), team: team.id, level, daysActive, tools, contribution, delta });
+    }
+  });
+  return people;
+})();
+
+const SEED_FEED = [
+  { id: 1,  name: "Quinn B.",  initials: "QB", team: "growth", fromLevel: 0,    toLevel: 1,   time: "2m ago",      note: "Used Claude 5 days straight" },
+  { id: 2,  name: "Avery N.",  initials: "AN", team: "bie",    fromLevel: 0,    toLevel: 1,   time: "11m ago",     note: "Meeting summaries daily" },
+  { id: 3,  name: "Alex P.",   initials: "AP", team: "gtops",  fromLevel: 1,    toLevel: 2,   time: "38m ago",     note: "Built first reusable prompt" },
+  { id: 4,  name: "Parker D.", initials: "PD", team: "coms",   fromLevel: 0,    toLevel: 1,   time: "1h ago",      note: "Social content workflow" },
+  { id: 5,  name: "Casey W.",  initials: "CW", team: "media",  fromLevel: 1,    toLevel: 2,   time: "2h ago",      note: "Campaign brief template live" },
+  { id: 6,  name: "Sam K.",    initials: "SK", team: "growth", fromLevel: 2,    toLevel: 3,   time: "5h ago",      note: "Automated reporting pipeline 🤖" },
+  { id: 7,  name: "Jamie O.",  initials: "JO", team: "bie",    fromLevel: null, toLevel: 0,   time: "6h ago",      note: "Completed onboarding" },
+  { id: 8,  name: "Morgan L.", initials: "ML", team: "gtops",  fromLevel: 1,    toLevel: 2,   time: "Yesterday",   note: "Copy review workflow shipped" },
+  { id: 9,  name: "Reese V.",  initials: "RV", team: "coms",   fromLevel: null, toLevel: 0,   time: "Yesterday",   note: "Tool access granted" },
+  { id: 10, name: "Jordan M.", initials: "JM", team: "media",  fromLevel: 3,    toLevel: "N", time: "2 days ago",  note: "Catalyst – activating others 🔮" },
+];
+
+const TOTAL = PEOPLE.length;
+const GOAL_DATE = new Date("2026-03-31");
+
+function getDaysUntil(date) {
+  return Math.max(0, Math.ceil((date - new Date()) / 86400000));
+}
+function getLevelInfo(id) {
+  return LEVELS.find(l => l.id === id) || LEVELS[0];
+}
+function getTeamInfo(id) {
+  return TEAMS.find(t => t.id === id) || TEAMS[0];
+}
+function levelScore(l) { return l === "N" ? 99 : l; }
+
+function CountUp({ target, duration = 1400, suffix = "" }) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    let v = 0;
+    const step = target / (duration / 16);
+    const t = setInterval(() => {
+      v += step;
+      if (v >= target) { setVal(target); clearInterval(t); } else setVal(Math.floor(v));
+    }, 16);
+    return () => clearInterval(t);
+  }, [target]);
+  return <span>{val}{suffix}</span>;
+}
+
+function PulsingDot({ color }) {
+  return (
+    <span style={{ position: "relative", display: "inline-flex", width: 10, height: 10 }}>
+      <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: color, opacity: 0.4, animation: "ping 1.5s ease-in-out infinite" }} />
+      <span style={{ borderRadius: "50%", width: 10, height: 10, background: color, display: "block" }} />
+    </span>
+  );
+}
+
+function LiveFeed() {
+  const [feed, setFeed] = useState(SEED_FEED);
+  const [flashId, setFlashId] = useState(null);
+  const pool = [
+    { name: "Chris A.", initials: "CA", team: "growth", from: 0, to: 1, note: "Joined Level 1 club!" },
+    { name: "Dana B.",  initials: "DB", team: "bie",    from: 0, to: 1, note: "Daily Claude user now" },
+    { name: "Lee C.",   initials: "LC", team: "gtops",  from: 1, to: 2, note: "Built campaign template" },
+    { name: "Nova D.",  initials: "ND", team: "coms",   from: 0, to: 1, note: "5-day streak achieved" },
+    { name: "Sage E.",  initials: "SE", team: "media",  from: 0, to: 0, note: "Just got tool access" },
+  ];
+  let idx = 0;
+  useEffect(() => {
+    const t = setInterval(() => {
+      const p = pool[idx % pool.length]; idx++;
+      const entry = { id: Date.now(), ...p, fromLevel: p.from, toLevel: p.to, time: "just now" };
+      setFlashId(entry.id);
+      setFeed(prev => [entry, ...prev].slice(0, 10));
+      setTimeout(() => setFlashId(null), 2500);
+    }, 7000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div style={{ marginBottom: 36 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <PulsingDot color={CK.springGreen} />
+        <span style={{ fontSize: 10, letterSpacing: 3, color: CK.springGreen, textTransform: "uppercase" }}>Live Level-Up Feed</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+        {feed.map((ev, i) => {
+          const toLvl  = getLevelInfo(ev.toLevel);
+          const fromLvl = ev.fromLevel !== null ? getLevelInfo(ev.fromLevel) : null;
+          const team   = getTeamInfo(ev.team);
+          const isNew  = ev.id === flashId;
+          return (
+            <div key={ev.id} style={{
+              display: "flex", alignItems: "center", gap: 10, padding: "9px 14px",
+              background: isNew ? toLvl.bg : i === 0 ? "rgba(82,200,0,0.03)" : "rgba(255,255,255,0.01)",
+              border: `1px solid ${isNew ? toLvl.border : BORDER}`,
+              borderRadius: 10, opacity: Math.max(0.3, 1 - i * 0.08),
+              transition: "background 0.8s, border-color 0.8s",
+              animation: isNew && i === 0 ? "feedSlide 0.45s ease" : "none",
+              flexWrap: "wrap",
+            }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, background: `${toLvl.color}25`, border: `1px solid ${toLvl.color}50`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: toLvl.color }}>
+                {ev.initials}
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 500, minWidth: 76, flexShrink: 0, color: TEXT_PRIMARY }}>{ev.name}</span>
+              <span style={{ fontSize: 9, color: team.color, background: `${team.color}18`, border: `1px solid ${team.color}35`, borderRadius: 20, padding: "1px 7px", flexShrink: 0 }}>{team.name}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1 }}>
+                {fromLvl && <><span style={{ fontSize: 10, color: TEXT_DIM, padding: "2px 7px", background: BG_BASE, borderRadius: 20 }}>{fromLvl.emoji} Lvl {fromLvl.id}</span><span style={{ color: CK.springGreen, fontSize: 11 }}>→</span></>}
+                {!fromLvl && <span style={{ fontSize: 10, color: TEXT_DIM }}>new →</span>}
+                <span style={{ fontSize: 10, color: toLvl.color, padding: "2px 8px", background: toLvl.bg, border: `1px solid ${toLvl.border}`, borderRadius: 20, fontWeight: 600 }}>
+                  {toLvl.emoji} {toLvl.id === "N" ? "Catalyst" : `Lvl ${toLvl.id} ${toLvl.name}`}
+                </span>
+                {isNew && <span style={{ fontSize: 9, color: CK.springGreen, background: "rgba(82,200,0,0.1)", border: "1px solid rgba(82,200,0,0.25)", borderRadius: 4, padding: "1px 6px" }}>NEW</span>}
+                <span style={{ fontSize: 10, color: TEXT_DIM }}>{ev.note}</span>
+              </div>
+              <span style={{ fontSize: 9, color: TEXT_DIM, flexShrink: 0 }}>{ev.time}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
+  );
+}
+
+function TeamCard({ team, rank, onClick, active }) {
+  const members = PEOPLE.filter(p => p.team === team.id);
+  const at1plus = members.filter(p => levelScore(p.level) >= 1).length;
+  const pct = Math.round((at1plus / members.length) * 100);
+  const avgLevel = (members.reduce((s, p) => s + (levelScore(p.level) === 99 ? 4 : levelScore(p.level)), 0) / members.length).toFixed(1);
+  const catalysts = members.filter(p => p.level === "N").length;
+  const bosses    = members.filter(p => p.level === 3).length;
+  return (
+    <div onClick={onClick} style={{
+      background: active ? team.accent : BG_CARD,
+      border: `1px solid ${active ? team.color : BORDER}`,
+      borderRadius: 14, padding: "18px 20px", cursor: "pointer",
+      transition: "all 0.2s", position: "relative", overflow: "hidden",
+    }}>
+      {rank <= 3 && (
+        <div style={{ position: "absolute", top: 10, right: 12, fontSize: 18 }}>
+          {rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉"}
+        </div>
+      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: team.color, boxShadow: `0 0 6px ${team.color}` }} />
+        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 16, fontWeight: 800, color: team.color }}>{team.name}</span>
+        <span style={{ fontSize: 10, color: TEXT_MUTED }}>· {team.lead}</span>
+      </div>
+      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 34, fontWeight: 800, lineHeight: 1, color: pct === 100 ? CK.springGreen : TEXT_PRIMARY, marginBottom: 6 }}>{pct}%</div>
+      <div style={{ height: 5, background: BG_BASE, borderRadius: 3, overflow: "hidden", marginBottom: 8 }}>
+        <div style={{ width: `${pct}%`, height: "100%", borderRadius: 3, background: team.color, transition: "width 1s ease" }} />
+      </div>
+      <div style={{ fontSize: 10, color: TEXT_MUTED }}>{at1plus}/{members.length} at Level 1+ · avg {avgLevel}</div>
+      {(catalysts > 0 || bosses > 0) && (
+        <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+          {catalysts > 0 && <span style={{ fontSize: 9, color: CK.royal, background: "rgba(112,57,163,0.1)", border: "1px solid rgba(112,57,163,0.25)", borderRadius: 20, padding: "1px 7px" }}>🔮 {catalysts}</span>}
+          {bosses > 0    && <span style={{ fontSize: 9, color: CK.butter, background: "rgba(255,195,0,0.1)",  border: "1px solid rgba(255,195,0,0.25)",  borderRadius: 20, padding: "1px 7px" }}>🤖 {bosses}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PersonRow({ person, rank, showTeam }) {
+  const lvl  = getLevelInfo(person.level);
+  const team = getTeamInfo(person.team);
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: showTeam ? "36px 1fr 90px 110px 80px 1fr" : "36px 1fr 110px 80px 1fr",
+      gap: 10, padding: "12px 16px",
+      background: rank && rank <= 3 ? lvl.bg : BG_CARD,
+      border: `1px solid ${rank && rank <= 3 ? lvl.border : BORDER}`,
+      borderRadius: 10, alignItems: "center",
+      animation: "slideIn 0.3s ease forwards",
+    }}>
+      <div style={{ fontSize: 12, color: rank === 1 ? CK.butter : rank === 2 ? CK.medGray : rank === 3 ? CK.gold : TEXT_DIM, fontWeight: 700, textAlign: "center" }}>
+        {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank ? rank : "–"}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, background: `linear-gradient(135deg,${lvl.color}40,${lvl.color}20)`, border: `1px solid ${lvl.color}60`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: lvl.color }}>
+          {person.initials}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: TEXT_PRIMARY }}>{person.name}</div>
+          <div style={{ fontSize: 10, color: TEXT_MUTED, marginTop: 1 }}>{person.tools.join(" · ") || "No tools yet"}</div>
+        </div>
+        {person.delta > 0 && <span style={{ fontSize: 9, color: CK.springGreen, background: "rgba(82,200,0,0.1)", border: "1px solid rgba(82,200,0,0.3)", borderRadius: 4, padding: "1px 5px", flexShrink: 0 }}>↑</span>}
+      </div>
+      {showTeam && (
+        <span style={{ fontSize: 10, color: team.color, background: `${team.color}18`, border: `1px solid ${team.color}35`, borderRadius: 20, padding: "2px 8px", textAlign: "center" }}>{team.name}</span>
+      )}
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 9px", borderRadius: 20, fontSize: 10, background: lvl.bg, border: `1px solid ${lvl.border}`, color: lvl.color, whiteSpace: "nowrap" }}>
+        {lvl.emoji} {lvl.id === "N" ? "Catalyst" : `Lvl ${lvl.id}`}
+      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+        <div style={{ flex: 1, height: 3, background: BG_BASE, borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ width: `${Math.min((person.daysActive / 30) * 100, 100)}%`, height: "100%", background: lvl.color, borderRadius: 2 }} />
+        </div>
+        <span style={{ fontSize: 10, color: TEXT_MUTED, minWidth: 22 }}>{person.daysActive}d</span>
+      </div>
+      <div style={{ fontSize: 10, color: TEXT_MUTED, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{person.contribution}</div>
+    </div>
+  );
+}
+
+function Dashboard() {
+  const [activeTab,    setActiveTab]    = useState("teams");
+  const [activeTeam,   setActiveTeam]   = useState(null);
+  const [searchQuery,  setSearchQuery]  = useState("");
+  const [collapsedLevels, setCollapsedLevels] = useState({});
+
+  const atLevel1Plus     = PEOPLE.filter(p => levelScore(p.level) >= 1).length;
+  const pct              = Math.round((atLevel1Plus / TOTAL) * 100);
+  const daysLeft         = getDaysUntil(GOAL_DATE);
+  const needed           = TOTAL - atLevel1Plus;
+  const leveledThisWeek  = PEOPLE.filter(p => p.delta > 0).length;
+
+  const levelCounts = LEVELS.map(l => ({ ...l, count: PEOPLE.filter(p => p.level === l.id).length }));
+
+  const teamsSorted = useMemo(() => [...TEAMS].sort((a, b) => {
+    const pctA = PEOPLE.filter(p => p.team === a.id && levelScore(p.level) >= 1).length / TEAM_SIZES[a.id];
+    const pctB = PEOPLE.filter(p => p.team === b.id && levelScore(p.level) >= 1).length / TEAM_SIZES[b.id];
+    return pctB - pctA;
+  }), []);
+
+  const filteredPeople = useMemo(() => {
+    let list = [...PEOPLE];
+    if (activeTeam)   list = list.filter(p => p.team === activeTeam);
+    if (searchQuery)  list = list.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    list.sort((a, b) => levelScore(b.level) - levelScore(a.level) || b.daysActive - a.daysActive);
+    return list;
+  }, [activeTeam, searchQuery]);
+
+  const toggleLevel = (lvlId) => {
+    setCollapsedLevels(prev => ({ ...prev, [lvlId]: !prev[lvlId] }));
+  };
+
+  const groupedByLevel = useMemo(() => {
+    return [...LEVELS].reverse().map(lvl => ({
+      ...lvl,
+      members: filteredPeople.filter(p => p.level === lvl.id),
+    })).filter(g => g.members.length > 0);
+  }, [filteredPeople]);
+
+  return (
+    <div style={{ minHeight: "100vh", background: BG_BASE, fontFamily: "'DM Mono','Courier New',monospace", color: TEXT_PRIMARY, position: "relative", overflow: "hidden" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap');
+        @keyframes ping      { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(2.2);opacity:0} }
+        @keyframes glow      { 0%,100%{opacity:0.6} 50%{opacity:1} }
+        @keyframes slideIn   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes feedSlide { from{opacity:0;transform:translateX(-14px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes pulseBar  { 0%,100%{box-shadow:0 0 14px rgba(0,134,0,0.5)} 50%{box-shadow:0 0 32px rgba(82,200,0,0.8),0 0 60px rgba(0,134,0,0.2)} }
+        @keyframes shimmer   { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        .tab-btn   { background:none;border:none;cursor:pointer;font-family:inherit; }
+        .team-card { transition:transform 0.15s; } .team-card:hover { transform:translateY(-2px); }
+        * { box-sizing:border-box; }
+        ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:${BG_BASE}} ::-webkit-scrollbar-thumb{background:${BORDER};border-radius:2px}
+        input::placeholder { color:${TEXT_DIM}; }
+        input:focus { outline:none; border-color:${CK.karmaGreen} !important; }
+      `}</style>
+
+      <div style={{ position:"fixed",inset:0,pointerEvents:"none",backgroundImage:`linear-gradient(rgba(0,134,0,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,134,0,0.025) 1px,transparent 1px)`,backgroundSize:"48px 48px" }} />
+      <div style={{ position:"fixed",top:-250,left:-250,width:800,height:800,borderRadius:"50%",background:"radial-gradient(circle,rgba(0,134,0,0.06) 0%,transparent 70%)",pointerEvents:"none" }} />
+      <div style={{ position:"fixed",bottom:-200,right:-200,width:600,height:600,borderRadius:"50%",background:"radial-gradient(circle,rgba(82,200,0,0.04) 0%,transparent 70%)",pointerEvents:"none" }} />
+
+      <div style={{ maxWidth:1120,margin:"0 auto",padding:"32px 24px",position:"relative",zIndex:2 }}>
+
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:28,flexWrap:"wrap",gap:12 }}>
+          <div>
+            <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:6 }}>
+              <PulsingDot color={CK.springGreen} />
+              <span style={{ fontSize:10,color:CK.springGreen,letterSpacing:3,textTransform:"uppercase" }}>Live</span>
+            </div>
+            <h1 style={{ fontFamily:"'Syne',sans-serif",fontSize:"clamp(24px,4vw,38px)",fontWeight:800,margin:0,letterSpacing:-1,lineHeight:1,color:TEXT_PRIMARY }}>AI ACTIVATION</h1>
+            <h1 style={{ fontFamily:"'Syne',sans-serif",fontSize:"clamp(24px,4vw,38px)",fontWeight:800,margin:0,letterSpacing:-1,lineHeight:1,color:CK.springGreen }}>LEADERBOARD</h1>
+          </div>
+          <div style={{ fontSize:13,color:TEXT_MUTED,textAlign:"right",letterSpacing:2,fontWeight:500 }}>
+            Marketing Org – Q3 FY2026
+          </div>
+        </div>
+
+        {/* Hero Goal Block */}
+        <div style={{ background:`linear-gradient(140deg,${CK.darkForest} 0%,#0a2000 60%,#0d1a04 100%)`,border:`1px solid ${BORDER_LIGHT}`,borderRadius:24,padding:"32px 36px",marginBottom:28,position:"relative",overflow:"hidden" }}>
+          <div style={{ position:"absolute",bottom:-40,left:"10%",right:"10%",height:120,background:"radial-gradient(ellipse,rgba(0,134,0,0.1) 0%,transparent 70%)",pointerEvents:"none" }} />
+          <div style={{ position:"absolute",top:0,right:0,width:200,height:200,background:"radial-gradient(circle at top right,rgba(82,200,0,0.06) 0%,transparent 70%)",pointerEvents:"none" }} />
+
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:24,marginBottom:28 }}>
+            <div>
+              <div style={{ fontSize:10,letterSpacing:4,color:CK.karmaGreen,textTransform:"uppercase",marginBottom:10 }}>🎯 March 31 Mission – Level 1+ for All</div>
+              <div style={{ display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap" }}>
+                <div style={{ fontFamily:"'Syne',sans-serif",fontSize:"clamp(56px,9vw,96px)",fontWeight:800,lineHeight:1,background:`linear-gradient(90deg,${CK.karmaGreen},${CK.springGreen},${CK.sageGreen})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 0 20px rgba(0,134,0,0.4))" }}>
+                  <CountUp target={pct} suffix="%" duration={1800} />
+                </div>
+                <div style={{ fontFamily:"'Syne',sans-serif",fontSize:28,fontWeight:700,color:TEXT_DIM,alignSelf:"flex-end",paddingBottom:10 }}>/ 100%</div>
+              </div>
+              <div style={{ fontSize:13,color:TEXT_MUTED,marginTop:8 }}>
+                <span style={{ color:CK.springGreen,fontWeight:600,fontSize:15 }}>{atLevel1Plus}</span>
+                <span style={{ color:TEXT_MUTED }}> of </span>
+                <span style={{ color:TEXT_PRIMARY,fontWeight:600,fontSize:15 }}>{TOTAL}</span>
+                <span style={{ color:TEXT_MUTED }}> people at Level 1+</span>
+                {needed > 0 && <span style={{ marginLeft:12,color:CK.butter,background:"rgba(255,195,0,0.1)",border:"1px solid rgba(255,195,0,0.25)",borderRadius:20,padding:"2px 10px",fontSize:11 }}>{needed} to go</span>}
+              </div>
+            </div>
+            <div style={{ textAlign:"center",background:"rgba(0,0,0,0.3)",border:`1px solid ${daysLeft<=7?"rgba(255,94,0,0.4)":BORDER}`,borderRadius:16,padding:"18px 24px" }}>
+              <div style={{ fontSize:9,letterSpacing:4,color:TEXT_MUTED,textTransform:"uppercase",marginBottom:6 }}>Time Remaining</div>
+              <div style={{ fontFamily:"'Syne',sans-serif",fontSize:"clamp(48px,7vw,80px)",fontWeight:800,lineHeight:1,color:daysLeft<=7?CK.sunset:daysLeft<=14?CK.butter:TEXT_PRIMARY,animation:daysLeft<=7?"glow 1.4s ease-in-out infinite":"none" }}>{daysLeft}</div>
+              <div style={{ fontSize:11,color:TEXT_MUTED,marginTop:4,letterSpacing:3 }}>DAYS LEFT</div>
+            </div>
+          </div>
+
+          <div>
+            <div style={{ height:20,background:BG_BASE,borderRadius:10,overflow:"hidden",position:"relative",border:`1px solid ${BORDER}` }}>
+              <div style={{ height:"100%",width:`${pct}%`,borderRadius:10,background:`linear-gradient(90deg,${CK.deepGreen} 0%,${CK.karmaGreen} 50%,${CK.springGreen} 100%)`,transition:"width 1.6s cubic-bezier(0.4,0,0.2,1)",animation:"pulseBar 3s ease-in-out infinite",position:"relative" }}>
+                <div style={{ position:"absolute",inset:0,borderRadius:10,background:"linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.18) 50%,transparent 100%)",backgroundSize:"200% 100%",animation:"shimmer 2.4s linear infinite" }} />
+              </div>
+              {[25,50,75].map(t=><div key={t} style={{ position:"absolute",top:0,bottom:0,left:`${t}%`,width:1,background:"rgba(255,255,255,0.05)" }} />)}
+            </div>
+            <div style={{ display:"flex",justifyContent:"space-between",marginTop:6,fontSize:9,color:TEXT_DIM,letterSpacing:1 }}>
+              <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span style={{ color:pct>=100?CK.springGreen:TEXT_DIM }}>100% 🎯</span>
+            </div>
+          </div>
+
+          <div style={{ display:"flex",gap:8,marginTop:18,flexWrap:"wrap" }}>
+            {[{label:"25% reached",val:25},{label:"Half way!",val:50},{label:"75% reached",val:75},{label:"🎯 GOAL HIT",val:100}].map(m=>(
+              <div key={m.val} style={{ fontSize:10,padding:"4px 12px",borderRadius:20,background:pct>=m.val?"rgba(82,200,0,0.1)":"rgba(255,255,255,0.02)",border:`1px solid ${pct>=m.val?"rgba(82,200,0,0.35)":BORDER}`,color:pct>=m.val?CK.springGreen:TEXT_DIM,display:"flex",alignItems:"center",gap:5,fontWeight:pct>=m.val?600:400 }}>
+                {pct>=m.val?"✓":"○"} {m.label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Stat cards */}
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(148px,1fr))",gap:12,marginBottom:28 }}>
+          {[
+            { label:"Total Members",       value:TOTAL,          icon:"👥", color:TEXT_MUTED },
+            { label:"At Level 1+",         value:atLevel1Plus,   icon:"✅", color:CK.karmaGreen },
+            { label:"Leveled Up This Week",value:leveledThisWeek,icon:"📈", color:CK.springGreen },
+            { label:"Still to Level Up",   value:needed,         icon:"⏳", color:needed>10?CK.butter:CK.springGreen },
+          ].map((s,i)=>(
+            <div key={i} style={{ background:BG_CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:"12px 16px",animation:`slideIn 0.4s ${i*0.07}s ease both`,display:"flex",alignItems:"center",gap:12 }}>
+              <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                <span style={{ fontSize:16 }}>{s.icon}</span>
+                <span style={{ fontFamily:"'Syne',sans-serif",fontSize:24,fontWeight:800,color:s.color,lineHeight:1 }}><CountUp target={s.value} /></span>
+              </div>
+              <div style={{ fontSize:10,color:TEXT_MUTED,letterSpacing:1,textTransform:"uppercase" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Level distribution */}
+        <div style={{ marginBottom:28,background:BG_CARD,border:`1px solid ${BORDER}`,borderRadius:16,padding:"24px 28px" }}>
+          <div style={{ fontSize:12,letterSpacing:3,color:TEXT_MUTED,marginBottom:20,textTransform:"uppercase" }}>Level Distribution</div>
+          <div style={{ display:"flex",flexDirection:"column",gap:18 }}>
+            {levelCounts.map(l=>{
+              const p2=Math.round((l.count/TOTAL)*100);
+              return (
+                <div key={l.id} style={{ display:"flex",alignItems:"center",gap:12 }}>
+                  <div style={{ width:130,display:"flex",alignItems:"center",gap:7,flexShrink:0 }}>
+                    <span style={{ fontSize:16 }}>{l.emoji}</span>
+                    <span style={{ fontSize:13,color:l.color,fontWeight:600 }}>L{l.id}</span>
+                    <span style={{ fontSize:12,color:TEXT_PRIMARY,fontWeight:500 }}>{l.name}</span>
+                  </div>
+                  <div style={{ width:260,fontSize:11,color:TEXT_MUTED,flexShrink:0 }}>{l.desc}</div>
+                  <div style={{ flex:1,height:12,background:BG_BASE,borderRadius:6,overflow:"hidden",minWidth:80 }}>
+                    <div style={{ width:`${p2}%`,height:"100%",borderRadius:6,background:l.color,boxShadow:`0 0 8px ${l.color}60`,transition:"width 1s ease" }} />
+                  </div>
+                  <div style={{ width:80,textAlign:"right",fontSize:14,color:l.color,fontWeight:600,flexShrink:0 }}>
+                    {l.count} <span style={{ color:TEXT_MUTED,fontWeight:400,fontSize:12 }}>({p2}%)</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <LiveFeed />
+
+        {/* Tabs */}
+        <div style={{ display:"flex",gap:4,marginBottom:20,borderBottom:`1px solid ${BORDER}` }}>
+          {[
+            { id:"teams",   label:"🏆 By Team" },
+            { id:"bylevel", label:"📊 By Level" },
+          ].map(tab=>(
+            <button key={tab.id} className="tab-btn" onClick={()=>{ setActiveTab(tab.id); setActiveTeam(null); setSearchQuery(""); setCollapsedLevels({}); }} style={{ padding:"10px 18px",fontSize:11,letterSpacing:2,textTransform:"uppercase",color:activeTab===tab.id?CK.springGreen:TEXT_MUTED,borderBottom:activeTab===tab.id?`2px solid ${CK.springGreen}`:"2px solid transparent",marginBottom:-1,transition:"all 0.2s" }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* TEAMS TAB */}
+        {activeTab==="teams" && (
+          <div>
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:12,marginBottom:28 }}>
+              {teamsSorted.map((team,i)=>(
+                <div key={team.id} className="team-card">
+                  <TeamCard team={team} rank={i+1} active={activeTeam===team.id}
+                    onClick={()=>{ setActiveTeam(activeTeam===team.id?null:team.id); setActiveTab("bylevel"); }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+              <div style={{ fontSize:10,letterSpacing:3,color:TEXT_MUTED,marginBottom:4,textTransform:"uppercase" }}>Team × Level Breakdown</div>
+              {teamsSorted.map(team=>{
+                const members=PEOPLE.filter(p=>p.team===team.id);
+                return (
+                  <div key={team.id} style={{ background:BG_CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap" }}>
+                    <div style={{ width:80,flexShrink:0 }}>
+                      <div style={{ fontSize:12,fontWeight:600,color:team.color }}>{team.name}</div>
+                      <div style={{ fontSize:10,color:TEXT_MUTED }}>{team.lead}</div>
+                    </div>
+                    {LEVELS.map(l=>{
+                      const count=members.filter(p=>p.level===l.id).length;
+                      return (
+                        <div key={l.id} style={{ display:"flex",alignItems:"center",gap:4,padding:"3px 10px",borderRadius:20,background:count>0?l.bg:"transparent",border:`1px solid ${count>0?l.border:BORDER}`,opacity:count>0?1:0.3 }}>
+                          <span style={{ fontSize:11 }}>{l.emoji}</span>
+                          <span style={{ fontSize:11,color:l.color,fontWeight:count>0?600:400 }}>{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* BY LEVEL TAB (combined individuals + level grouping) */}
+        {activeTab==="bylevel" && (
+          <div>
+            {/* Search + team filter */}
+            <div style={{ display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center" }}>
+              <div style={{ flex:1,minWidth:200,position:"relative" }}>
+                <span style={{ position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:TEXT_DIM }}>🔍</span>
+                <input
+                  value={searchQuery}
+                  onChange={e=>setSearchQuery(e.target.value)}
+                  placeholder="Search by name..."
+                  style={{ width:"100%",background:BG_CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:"10px 12px 10px 34px",fontSize:12,color:TEXT_PRIMARY,fontFamily:"inherit",transition:"border-color 0.2s" }}
+                />
+              </div>
+              <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+                <button onClick={()=>setActiveTeam(null)} className="tab-btn" style={{ fontSize:10,padding:"7px 14px",borderRadius:20,border:`1px solid ${!activeTeam?CK.karmaGreen:BORDER}`,color:!activeTeam?CK.springGreen:TEXT_MUTED,background:!activeTeam?"rgba(0,134,0,0.1)":BG_CARD,letterSpacing:1,transition:"all 0.2s" }}>
+                  All Teams
+                </button>
+                {TEAMS.map(t=>(
+                  <button key={t.id} onClick={()=>setActiveTeam(activeTeam===t.id?null:t.id)} className="tab-btn" style={{ fontSize:10,padding:"7px 14px",borderRadius:20,border:`1px solid ${activeTeam===t.id?t.color:BORDER}`,color:activeTeam===t.id?t.color:TEXT_MUTED,background:activeTeam===t.id?`${t.color}18`:BG_CARD,letterSpacing:1,transition:"all 0.2s" }}>
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ fontSize:10,color:TEXT_MUTED,marginBottom:14,letterSpacing:1 }}>
+              {filteredPeople.length} result{filteredPeople.length!==1?"s":""}
+              {activeTeam && <span style={{ color:getTeamInfo(activeTeam).color }}> · {getTeamInfo(activeTeam).name} ({getTeamInfo(activeTeam).lead})</span>}
+            </div>
+
+            {/* Grouped by level */}
+            <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
+              {groupedByLevel.map(group => {
+                const isCollapsed = !!collapsedLevels[group.id];
+                return (
+                  <div key={group.id}>
+                    {/* Level group header – clickable to collapse/expand */}
+                    <button
+                      className="tab-btn"
+                      onClick={() => toggleLevel(group.id)}
+                      style={{
+                        width:"100%", display:"flex", alignItems:"center", gap:10,
+                        padding:"12px 16px", marginBottom: isCollapsed ? 0 : 8,
+                        background: group.bg, border:`1px solid ${group.border}`,
+                        borderRadius: isCollapsed ? 12 : "12px 12px 4px 4px",
+                        cursor:"pointer", transition:"all 0.2s",
+                      }}
+                    >
+                      <span style={{ fontSize:11, color:group.color, transition:"transform 0.2s", transform:isCollapsed?"rotate(-90deg)":"rotate(0deg)", display:"inline-block" }}>▼</span>
+                      <span style={{ fontSize:16 }}>{group.emoji}</span>
+                      <span style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:800, color:group.color }}>
+                        {group.id === "N" ? "Level N" : `Level ${group.id}`} — {group.name}
+                      </span>
+                      {group.tag && <span style={{ fontSize:9, letterSpacing:2, color:group.color, background:`${group.color}15`, border:`1px solid ${group.border}`, borderRadius:4, padding:"2px 8px" }}>{group.tag}</span>}
+                      <span style={{ fontSize:11, color:TEXT_MUTED, marginLeft:"auto" }}>{group.members.length} people</span>
+                    </button>
+
+                    {/* Expandable person list */}
+                    {!isCollapsed && (
+                      <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                        {group.members.map((p, i) => (
+                          <PersonRow key={p.id} person={p} rank={i + 1} showTeam={true} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {groupedByLevel.length === 0 && (
+                <div style={{ textAlign:"center", padding:40, color:TEXT_MUTED, fontSize:12 }}>No results found</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginTop:48,textAlign:"center",fontSize:10,color:TEXT_DIM,letterSpacing:2 }}>
+          AI ACTIVATION SYSTEM · CREDIT KARMA MARKETING · AUTO-UPDATES DAILY
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<Dashboard />);
+  </script>
 </body>
 </html>

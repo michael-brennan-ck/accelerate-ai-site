@@ -1,0 +1,222 @@
+name: Update Leaderboard Data
+
+on:
+  schedule:
+    # Daily at 7am PT (2pm UTC)
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY_JSON }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Query BigQuery and build data.json
+        run: |
+          set -euo pipefail
+
+          DATASET="ck-growthtech-prod.accelerate_ai_tracker.skill_usage"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # ── 1. Per-person rollup ──────────────────────────────────────────
+          #   user, team, current_level, days_active, tools (comma-sep),
+          #   latest_contribution, leveled_up_recently (boolean)
+          bq query --use_legacy_sql=false --format=json --max_rows=10000 \
+          "$(cat <<'SQL'
+          WITH base AS (
+            SELECT
+              user,
+              team,
+              skill_name,
+              ide,
+              timestamp,
+              DATE(timestamp) AS day
+            FROM `ck-growthtech-prod.accelerate_ai_tracker.skill_usage`
+          ),
+          days_active AS (
+            SELECT user, COUNT(DISTINCT day) AS days_active
+            FROM base GROUP BY user
+          ),
+          tools_used AS (
+            SELECT user, STRING_AGG(DISTINCT ide, ', ' ORDER BY ide) AS tools
+            FROM base GROUP BY user
+          ),
+          latest AS (
+            SELECT user, ARRAY_AGG(skill_name ORDER BY timestamp DESC LIMIT 1)[OFFSET(0)] AS latest_contribution,
+                   MAX(timestamp) AS last_seen
+            FROM base GROUP BY user
+          ),
+          user_team AS (
+            SELECT user, ARRAY_AGG(team ORDER BY timestamp DESC LIMIT 1)[OFFSET(0)] AS team
+            FROM base GROUP BY user
+          ),
+          level_calc AS (
+            SELECT
+              d.user,
+              d.days_active,
+              CASE
+                WHEN d.days_active >= 20 THEN 3
+                WHEN d.days_active >= 14 THEN 2
+                WHEN d.days_active >=  5 THEN 1
+                ELSE 0
+              END AS current_level
+            FROM days_active d
+          ),
+          prev_level AS (
+            SELECT
+              b.user,
+              CASE
+                WHEN COUNT(DISTINCT IF(day < DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY), day, NULL)) >= 20 THEN 3
+                WHEN COUNT(DISTINCT IF(day < DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY), day, NULL)) >= 14 THEN 2
+                WHEN COUNT(DISTINCT IF(day < DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY), day, NULL)) >=  5 THEN 1
+                ELSE 0
+              END AS prev_level
+            FROM base b GROUP BY b.user
+          )
+          SELECT
+            ut.user,
+            ut.team,
+            lc.current_level,
+            lc.days_active,
+            tu.tools,
+            la.latest_contribution,
+            la.last_seen,
+            (lc.current_level > pl.prev_level) AS leveled_up_recently,
+            pl.prev_level
+          FROM user_team ut
+          JOIN level_calc lc  ON lc.user = ut.user
+          JOIN tools_used tu  ON tu.user = ut.user
+          JOIN latest la      ON la.user = ut.user
+          JOIN prev_level pl  ON pl.user = ut.user
+          ORDER BY lc.current_level DESC, lc.days_active DESC
+          SQL
+          )" > /tmp/people.json
+
+          # ── 2. Per-team summary ───────────────────────────────────────────
+          bq query --use_legacy_sql=false --format=json --max_rows=100 \
+          "$(cat <<'SQL'
+          WITH base AS (
+            SELECT user, team, DATE(timestamp) AS day
+            FROM `ck-growthtech-prod.accelerate_ai_tracker.skill_usage`
+          ),
+          user_days AS (
+            SELECT user, team, COUNT(DISTINCT day) AS days_active
+            FROM base GROUP BY user, team
+          ),
+          user_levels AS (
+            SELECT
+              user, team, days_active,
+              CASE
+                WHEN days_active >= 20 THEN 3
+                WHEN days_active >= 14 THEN 2
+                WHEN days_active >=  5 THEN 1
+                ELSE 0
+              END AS level
+            FROM user_days
+          )
+          SELECT
+            team,
+            COUNT(*)                                    AS total_members,
+            COUNTIF(level >= 1)                         AS at_level_1_plus,
+            ROUND(COUNTIF(level >= 1) / COUNT(*) * 100) AS pct_level_1_plus,
+            ROUND(AVG(level), 2)                        AS avg_level,
+            COUNTIF(level = 3)                          AS level_3_count,
+            COUNTIF(level = 2)                          AS level_2_count,
+            COUNTIF(level = 1)                          AS level_1_count,
+            COUNTIF(level = 0)                          AS level_0_count
+          FROM user_levels
+          GROUP BY team
+          ORDER BY pct_level_1_plus DESC
+          SQL
+          )" > /tmp/teams.json
+
+          # ── 3. Recent level-ups (last 7 days) ────────────────────────────
+          bq query --use_legacy_sql=false --format=json --max_rows=50 \
+          "$(cat <<'SQL'
+          WITH base AS (
+            SELECT user, team, DATE(timestamp) AS day
+            FROM `ck-growthtech-prod.accelerate_ai_tracker.skill_usage`
+          ),
+          daily AS (
+            SELECT user, team, COUNT(DISTINCT day) AS days_active,
+                   COUNT(DISTINCT IF(day < DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY), day, NULL)) AS days_before
+            FROM base GROUP BY user, team
+          ),
+          transitions AS (
+            SELECT
+              user, team, days_active,
+              CASE
+                WHEN days_active >= 20 THEN 3
+                WHEN days_active >= 14 THEN 2
+                WHEN days_active >=  5 THEN 1
+                ELSE 0
+              END AS current_level,
+              CASE
+                WHEN days_before >= 20 THEN 3
+                WHEN days_before >= 14 THEN 2
+                WHEN days_before >=  5 THEN 1
+                ELSE 0
+              END AS prev_level
+            FROM daily
+          )
+          SELECT user, team, prev_level AS from_level, current_level AS to_level
+          FROM transitions
+          WHERE current_level > prev_level
+          ORDER BY current_level DESC, user
+          SQL
+          )" > /tmp/level_ups.json
+
+          # ── 4. Assemble data.json ─────────────────────────────────────────
+          python3 - <<'PYEOF'
+          import json, sys, os
+
+          def load(path):
+              try:
+                  with open(path) as f:
+                      return json.load(f)
+              except (json.JSONDecodeError, FileNotFoundError):
+                  return []
+
+          people    = load("/tmp/people.json")
+          teams     = load("/tmp/teams.json")
+          level_ups = load("/tmp/level_ups.json")
+
+          timestamp = os.environ.get("TIMESTAMP", "")
+
+          data = {
+              "generated_at": timestamp,
+              "people": people,
+              "teams": teams,
+              "level_ups": level_ups
+          }
+
+          with open("data.json", "w") as f:
+              json.dump(data, f, indent=2)
+
+          print(f"data.json written: {len(people)} people, {len(teams)} teams, {len(level_ups)} level-ups")
+          PYEOF
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          if git diff --cached --quiet; then
+            echo "No changes to data.json — skipping commit."
+          else
+            git commit -m "chore: update leaderboard data [$(date -u +%Y-%m-%d)]"
+            git push
+          fi

@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-03-10T14:00:00Z",
+  "people": [
+    { "user": "sam.kim", "team": "growth", "current_level": 3, "days_active": 28, "tools": "Claude Code, Cursor", "latest_contribution": "Automated reporting pipeline", "last_seen": "2026-03-10T09:14:00Z", "leveled_up_recently": false, "prev_level": 3 },
+    { "user": "jordan.martinez", "team": "media", "current_level": 3, "days_active": 24, "tools": "Claude Code", "latest_contribution": "Content calendar agent", "last_seen": "2026-03-10T08:45:00Z", "leveled_up_recently": true, "prev_level": 2 },
+    { "user": "alex.patel", "team": "gtops", "current_level": 2, "days_active": 18, "tools": "Claude Code, Cursor", "latest_contribution": "Built first reusable prompt", "last_seen": "2026-03-09T17:30:00Z", "leveled_up_recently": true, "prev_level": 1 },
+    { "user": "casey.walker", "team": "media", "current_level": 2, "days_active": 16, "tools": "Claude Code", "latest_contribution": "Campaign brief template live", "last_seen": "2026-03-09T15:22:00Z", "leveled_up_recently": true, "prev_level": 1 },
+    { "user": "morgan.lee", "team": "gtops", "current_level": 2, "days_active": 15, "tools": "Cursor", "latest_contribution": "Copy review workflow shipped", "last_seen": "2026-03-08T14:10:00Z", "leveled_up_recently": true, "prev_level": 1 },
+    { "user": "quinn.baker", "team": "growth", "current_level": 1, "days_active": 9, "tools": "Claude Code", "latest_contribution": "Daily AI user", "last_seen": "2026-03-10T10:00:00Z", "leveled_up_recently": true, "prev_level": 0 },
+    { "user": "avery.nguyen", "team": "bie", "current_level": 1, "days_active": 8, "tools": "Claude Code", "latest_contribution": "Meeting summaries daily", "last_seen": "2026-03-10T09:55:00Z", "leveled_up_recently": true, "prev_level": 0 },
+    { "user": "parker.davis", "team": "coms", "current_level": 1, "days_active": 7, "tools": "Claude Code", "latest_contribution": "Social content workflow", "last_seen": "2026-03-10T08:30:00Z", "leveled_up_recently": true, "prev_level": 0 },
+    { "user": "riley.johnson", "team": "growth", "current_level": 1, "days_active": 6, "tools": "Cursor", "latest_contribution": "Email drafts", "last_seen": "2026-03-09T11:20:00Z", "leveled_up_recently": false, "prev_level": 1 },
+    { "user": "taylor.smith", "team": "bie", "current_level": 1, "days_active": 5, "tools": "Claude Code", "latest_contribution": "Research assistant", "last_seen": "2026-03-09T10:45:00Z", "leveled_up_recently": true, "prev_level": 0 },
+    { "user": "jamie.ortiz", "team": "bie", "current_level": 0, "days_active": 2, "tools": "Claude Code", "latest_contribution": "Just activated!", "last_seen": "2026-03-10T07:00:00Z", "leveled_up_recently": false, "prev_level": 0 },
+    { "user": "reese.vega", "team": "coms", "current_level": 0, "days_active": 1, "tools": "Cursor", "latest_contribution": "Tool access granted", "last_seen": "2026-03-09T09:00:00Z", "leveled_up_recently": false, "prev_level": 0 }
+  ],
+  "teams": [
+    { "team": "growth", "total_members": 52, "at_level_1_plus": 42, "pct_level_1_plus": 81, "avg_level": 1.35, "level_3_count": 4, "level_2_count": 10, "level_1_count": 28, "level_0_count": 10 },
+    { "team": "bie", "total_members": 38, "at_level_1_plus": 30, "pct_level_1_plus": 79, "avg_level": 1.21, "level_3_count": 2, "level_2_count": 7, "level_1_count": 21, "level_0_count": 8 },
+    { "team": "gtops", "total_members": 44, "at_level_1_plus": 33, "pct_level_1_plus": 75, "avg_level": 1.18, "level_3_count": 3, "level_2_count": 8, "level_1_count": 22, "level_0_count": 11 },
+    { "team": "coms", "total_members": 36, "at_level_1_plus": 26, "pct_level_1_plus": 72, "avg_level": 1.08, "level_3_count": 1, "level_2_count": 5, "level_1_count": 20, "level_0_count": 10 },
+    { "team": "media", "total_members": 30, "at_level_1_plus": 21, "pct_level_1_plus": 70, "avg_level": 1.10, "level_3_count": 2, "level_2_count": 4, "level_1_count": 15, "level_0_count": 9 }
+  ],
+  "level_ups": [
+    { "user": "quinn.baker", "team": "growth", "from_level": 0, "to_level": 1 },
+    { "user": "avery.nguyen", "team": "bie", "from_level": 0, "to_level": 1 },
+    { "user": "alex.patel", "team": "gtops", "from_level": 1, "to_level": 2 },
+    { "user": "parker.davis", "team": "coms", "from_level": 0, "to_level": 1 },
+    { "user": "casey.walker", "team": "media", "from_level": 1, "to_level": 2 },
+    { "user": "jordan.martinez", "team": "media", "from_level": 2, "to_level": 3 },
+    { "user": "taylor.smith", "team": "bie", "from_level": 0, "to_level": 1 },
+    { "user": "morgan.lee", "team": "gtops", "from_level": 1, "to_level": 2 }
+  ]
+}
